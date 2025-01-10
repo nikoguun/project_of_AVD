@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation des Données</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.10.0/plotly.min.js"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bar-chart-line"></i> Data Analyzer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{% url 'upload_csv' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'display_csv' %}">Analyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <a href="{% url 'upload_csv' %}" class="btn btn-danger">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Visualisation des Données</h1>
+        
+        <!-- Formulaire pour sélectionner la colonne et le type de graphique -->
+        <form method="GET" class="card p-4 bg-light">
+            <div class="row">
+                <!-- Sélection de la colonne -->
+                <div class="col-md-6 mb-3">
+                    <label for="column" class="form-label">Choisir la colonne à visualiser :</label>
+                    <select name="column" id="column" class="form-select">
+                        {% for col in data.columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Sélection du type de graphique -->
+                <div class="col-md-6 mb-3">
+                    <label for="plot_type" class="form-label">Type de graphique :</label>
+                    <select name="plot_type" id="plot_type" class="form-select">
+                        <option value="line">Graphique linéaire</option>
+                        <option value="hist">Histogramme</option>
+                        <option value="scatter">Graphique de dispersion</option>
+                        <option value="pairplot">Pairplot</option>
+                        <option value="boxplot">boxplot (outliers)</option>
+                        <option value="heatmap">Carte de chaleur (Corrélation)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Options spécifiques au scatter plot -->
+            <div id="scatter-options" class="row mb-3" style="display: none;">
+                <div class="col-md-6">
+                    <label for="scatter_x" class="form-label">Colonne pour l'axe X :</label>
+                    <select name="scatter_x" id="scatter_x" class="form-select">
+                        {% for col in data.columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="scatter_y" class="form-label">Colonne pour l'axe Y :</label>
+                    <select name="scatter_y" id="scatter_y" class="form-select">
+                        {% for col in data.columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary px-4">Visualiser</button>
+            </div>
+        </form>
+
+        <!-- Affichage du graphique -->
+        <div class="mt-4">
+            <h3>Graphique :</h3>
+            <div class="card p-3">
+                {% if graph_html %}
+                    <div class="graph-container">
+                        {{ graph_html|safe }}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">Aucun graphique à afficher.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Gestion dynamique de l'affichage des options
+        document.getElementById('plot_type').addEventListener('change', function() {
+            const scatterOptions = document.getElementById('scatter-options');
+            const columnSelect = document.getElementById('column');
+            
+            // Afficher/masquer les options de scatter plot
+            if (this.value === 'scatter') {
+                scatterOptions.style.display = 'flex';
+                columnSelect.parentElement.style.display = 'none';
+            } else {
+                scatterOptions.style.display = 'none';
+                columnSelect.parentElement.style.display = 'block';
+            }
+            
+            // Masquer la sélection de colonne pour le heatmap
+            if (this.value === 'heatmap' || this.value === 'pairplot') {
+                columnSelect.parentElement.style.display = 'none';
+            }
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

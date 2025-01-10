@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Affichage CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bar-chart-line"></i> Data Analyzer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'upload_csv' %}">Uploader</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Analyse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <a href="/logout" class="btn btn-danger">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <!-- Formulaire de recherche avec bouton "Voir les graphiques" à côté du bouton "Rechercher" -->
+        <form method="GET" class="mb-3">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="row_index" class="form-label">Index de ligne :</label>
+                    <input type="number" name="row_index" id="row_index" class="form-control" placeholder="Ex: 0, 1, 2...">
+                </div>
+                <div class="col-md-3">
+                    <label for="col_name" class="form-label">Nom de colonne :</label>
+                    <input type="text" name="col_name" id="col_name" class="form-control" placeholder="Ex: Age, Salaire...">
+                </div>
+                <div class="col-md-3">
+                    <label for="calculate_stats" class="form-label">Statistiques :</label>
+                    <select name="calculate_stats" id="calculate_stats" class="form-select">
+                        <option value="">Non</option>
+                        <option value="yes">Oui</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-flex w-100">
+                        <!-- Bouton Rechercher -->
+                        <button type="submit" class="btn btn-primary w-50">Rechercher</button>
+                        <!-- Bouton Voir les graphiques -->
+                        <a href="{% url 'visualize_data' %}" class="btn btn-success w-50 ms-2">Voir les graphiques</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if stats %}
+        <h5 class="mt-4">Analyse Statistique :</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Mesure</th>
+                        <th>Valeur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, value in stats.items %}
+                    <tr>
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if filtered_data %}
+        <h5 class="mt-4">Résultat Filtré :</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        {% for header in headers %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in filtered_data %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <h5 class="mt-4">Données complètes :</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        {% for header in data.0 %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data|slice:"1:" %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center text-lg-start mt-5">
+        <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
+            © 2025 Data Analyzer. Tous droits réservés.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

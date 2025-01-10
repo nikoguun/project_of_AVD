@@ -1,0 +1,89 @@
+def visualize_data(request):
+    # Récupérer les données CSV depuis la session
+    data = request.session.get('csv_data', None)
+    
+    if data:
+        headers = data[0]  # Première ligne comme en-têtes
+        rows = data[1:]  # Les lignes suivantes comme données
+        
+        # Convertir les données en DataFrame
+        df = pd.DataFrame(rows, columns=headers)
+        
+        # Vérification si le DataFrame est vide
+        if not df.empty:
+            # Vérifier s'il existe des colonnes numériques pour le pairplot
+            numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+
+            # Récupérer le nom de la colonne et type de graphique depuis l'URL
+            column_name = request.GET.get('column', None)
+            plot_type = request.GET.get('plot_type', 'hist')  # Type de graphique
+            scatter_x = request.GET.get('scatter_x', None)  # Colonne pour l'axe X du scatter
+            scatter_y = request.GET.get('scatter_y', None)  # Colonne pour l'axe Y du scatter
+
+            if plot_type == 'hist' and column_name and column_name in df.columns:
+                # Histogramme
+                fig = px.histogram(df, x=column_name)
+                fig.update_layout(
+                    yaxis=dict(
+                        title='Fréquence',
+                        tickfont=dict(size=14, color='blue'),
+                        tickangle=45,
+                        showgrid=True,
+                        gridcolor='lightgray',
+                        zeroline=True,
+                        zerolinecolor='black',
+                        zerolinewidth=2
+                    )
+                )
+                graph_html = fig.to_html(full_html=False)
+            
+            elif plot_type == 'line' and column_name and column_name in df.columns:
+                # Graphique linéaire
+                fig = px.line(df, x=df.index, y=column_name)
+                fig.update_layout(
+                    yaxis=dict(
+                        title='Valeur',
+                        tickfont=dict(size=14, color='green'),
+                        showgrid=True,
+                        gridcolor='lightgray',
+                        zeroline=True,
+                        zerolinecolor='black',
+                        zerolinewidth=2
+                    )
+                )
+                graph_html = fig.to_html(full_html=False)
+            
+            elif plot_type == 'scatter' and scatter_x and scatter_y:
+                # Graphique de dispersion (Scatter Plot)
+                if scatter_x in df.columns and scatter_y in df.columns:
+                    fig = px.scatter(df, x=scatter_x, y=scatter_y, title=f'Scatter plot: {scatter_x} vs {scatter_y}')
+                    fig.update_layout(
+                        xaxis_title=scatter_x,
+                        yaxis_title=scatter_y
+                    )
+                    graph_html = fig.to_html(full_html=False)
+                else:
+                    graph_html = f"Colonnes invalides pour le scatter plot. Assurez-vous que '{scatter_x}' et '{scatter_y}' existent dans les données."
+            
+            elif plot_type == 'pairplot' and numeric_columns:
+                # Pairplot avec Seaborn uniquement si des colonnes numériques existent
+                plt.figure(figsize=(10, 8))
+                sns.pairplot(df[numeric_columns])  # Affichage des variables numériques
+                plt.title("Pairplot des Variables Numériques")
+                
+                # Sauvegarder le plot dans un objet BytesIO et le convertir en base64
+                img = BytesIO()
+                plt.savefig(img, format='png')
+                img.seek(0)
+                graph_html = f'<img src="data:image/png;base64,{base64.b64encode(img.getvalue()).decode()}" alt="Pairplot">'
+                plt.close()  # Fermer la figure après l'enregistrement
+            
+            else:
+                graph_html = "Veuillez sélectionner un graphique valide ou vérifier les données."
+
+        else:
+            graph_html = "Aucune donnée disponible pour le graphique."
+    else:
+        graph_html = "Aucune donnée CSV chargée."
+    
+    return render(request, 'data_analyzer/visualize.html', {'graph_html': graph_html, 'data': df})
